@@ -11,8 +11,8 @@ The main dataset (the *metadatabase*) is not stored in here due to size limitati
 
 # Navigation
 
-- *Functions*, 
+- *Functions*, this folder contains any function needed for the analysis
 
 - *Main_Script.rmd*, this is the script that includes the article published in PlosOne as well as the code embeaded in the markdown.
 
-- *Functions*, 
+
