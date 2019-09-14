@@ -1,0 +1,1474 @@
+---
+title: 'A metadata approach to evaluate the state of ocean knowledge: Strengths, limitations, and application to Mexico'
+author: "Palacios-Abrantes J.1*¶, Cisneros-Montemayor A.M.1¶, Cisneros-Mata M.A.2¶, Rodríguez L.3¶, Arreguín-Sánchez F.4¶, Aguilar V.5&, Domínguez-Sánchez S.6&, Fulton S.7&, López-Sagástegui R.6&, Reyes-Bonilla H.8&, Rivera R.9&, Salas S.10&, Simoes N.11-14& & Cheung, W.W.L.1¶"
+csl: plos.csl
+output:
+  word_document:
+    reference_docx: PlosTemplate.docx
+  pdf_document:
+    fig_caption: yes
+geometry: margin=1in
+editor_options:
+  chunk_output_type: console
+bibliography: Metadata_References.bib
+---
+
+^1^Institute for the Oceans and Fisheries, The University of British Columbia, Vancouver, Canada. ^2^ Instituto Nacional de Pesca y Acuacultura, Guaymas, Sonora, México. ^3^ IEnvironmental Defense Fund de México, La Paz, México. ^4^ Instituto Politécnico Nacional, Centro Interdisciplinario de Ciencias Marinas, La Paz, México. ^5^ Comisión Nacional para el Conocimiento y Uso de la Biodiversidad, Ciudad de México, México. ^6^ University of California, San Diego, Scripps Institution of Oceanography, La Jolla, CA, USA. ^7^ Comunidad y Biodiversidad, Cancún, México. ^8^ Universidad Autónoma de Baja California Sur, La Paz, México. ^9^ SmartFish Rescate de Valor, A.C., La Paz, México. ^10^ Instituto Politécnico Nacional, Centro de Investigación y Estudios Avanzados del Instituto Politécnico Nacional, México. ^11^ Universidad Marista de Mérida. ^12^ Universidad Nacional Autónoma de México, Unidad Multidisciplinaria de Docencia e Investigación – Sisal, México. ^13^ Laboratorio Nacional de Resiliencia Costera, Laboratorios Nacionales, Ciudad de México, México. ^14^ Texas A&M University, Corpus Christi, Texas, USA.
+
+^*^ Corresponding author: j.palacios@oceans.ubc.ca
+
+^¶^ These authors contributed equally to this work
+
+^&^ These authors contributed equally to this work
+
+```{r setup, eval=T, echo=F, warning=F,message=F, results='hide'}
+
+#### READ ME !!! ####
+# Run this chunk before knit so you make sure you have all pkgs installed in R
+
+# bibliography: Metadata_Reference.bib
+
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+
+#### Library ####
+packages <- c(
+  "data.table", # data wrangling
+  "dplyr", # data wrangling
+  "tidyr", # data wrangling
+  "ggplot2", # plotting figures
+  "cowplot", # accomodating figures
+  "ggpubr", # accomodating figures 
+  "wesanderson", # colors pallet 
+  "ggrepel", # Pretty plot texts
+  "gridExtra", # accomodating figures  
+  "networkD3", # For flow figure
+  "sf", # For mexico's map
+  "tools", # For mexico's map
+  "taxize" # for getting species names
+  )
+
+ipak(packages)
+
+```
+
+```{r Libraries and Data, eval=T, echo=F, warning=F,message=F}
+
+#--------------------------#
+# Data needed ####
+#--------------------------#
+
+# Metadata Tempalte (Results)
+# Version december 2018
+Meta_Template <- suppressMessages(fread("~/Dropbox/Metadata_Mexico/English/Templates/Template_7.csv",
+                 colClasses = c(Location = 'character',
+                                Notes = 'character'
+                                )
+                 )
+                 ) 
+
+# Monitoreo Nooroeste Cleaned and processed Template
+### Note ##
+# This Template is not included in the finalt Metadata Template but accounted for in the analysis.
+
+Monitoreo_T <- read.csv("~/Dropbox/Metadata_Mexico/Manuscript/Data/Monitoreo_Template.csv") 
+
+# Merging both #
+
+Template <- Meta_Template %>% 
+  bind_rows(Monitoreo_T)
+
+# For effort map (Methodology) #
+Congresos <- fread("Data/Lugares.csv")
+
+# Metadata Key (Annex) #
+Key <- fread("Data/Metadata_Key.csv")
+ 
+#--------------------------# 
+# Functions needed ####
+#--------------------------#
+
+# For plotting time plot (Fig 3)
+source('Functions/ts_fun.R')
+
+# For plots standarization
+
+ggtheme_plot <- function() {
+  theme(
+    plot.title = element_text(size = rel(1), hjust = 0, face = "bold"),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    panel.border     = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.x = element_text(size = 18,
+                               angle = 0,
+                               face = "plain"),
+    axis.text.y = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    legend.key = element_rect(colour = NA, fill = NA),
+    legend.position  = "top",
+    legend.title = element_text(size = 22),
+    legend.text = element_text(size = 16),
+    strip.text.x = element_text(size = 24, colour = "darkgrey")
+  )
+}
+
+# For map standarization
+ggtheme_map <- function(base_size = 9, Region = "NA") {
+  
+  theme(text             = element_text(
+    color = "gray30", size = base_size),
+    plot.title       = element_text(size = rel(1.25), hjust = 0, face = "bold"),
+    panel.background = element_blank(),
+    panel.border     = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "transparent"),
+    strip.background =element_rect(fill = "transparent"),
+    strip.text.x = element_text(size = 18, colour = "black",face= "bold.italic", angle = 0),
+    axis.line        = element_blank(),
+    axis.ticks       = element_blank(),
+    axis.text        = element_blank(),
+    axis.title       = element_blank(),
+    legend.position = "bottom"
+  )
+}
+
+```
+
+
+# Abstract
+
+Climate change, mismanaged resource extraction, and pollution are reshaping global marine ecosystems with direct consequences on human societies. Sustainable ocean development requires knowledge and data across disciplines, scales and knowledge types. Although several disciplines are generating large amounts of data on marine socio-ecological systems, such information is often underutilized due to fragmentation across institutions or stakeholders, limited standardization across scale, time or disciplines, and the fact that information is often not searchable within existing databases. Compiling metadata, the information which describes existing sets of data, is an effective tool that can address these challenges, particularly when metadata corresponding to multiple datasets can be combined to integrate, organize and classify multidisciplinary data. Here, using Mexico as a case study, we describe the compilation and analysis of a metadatabase of ocean knowledge that aims to improve access to information, facilitate multidisciplinary data sharing and integration, and foster collaboration among stakeholders. We also evaluate the knowledge trends and gaps for informing ocean management. Analysis of the metadatabase highlights that past and current research in Mexico focuses strongly on ecology and fisheries, with biological data more consistent over time and space compared to data on human dimensions. Regional imbalances in available information were also evident, with most available information corresponding to the Gulf of California, Campeche Bank and Caribbean and less available for the central and south Pacific and the western Gulf of Mexico. Despite existing knowledge gaps in Mexico and elsewhere, we argue that systematic efforts such as this can often reveal an abundance of information for decision-makers to develop policies that meet key commitments on ocean sustainability. Surmounting current cross-scale social and ecological challenges for sustainability requires transdisciplinary approaches. Metadatabases are critical tools to make efficient use of existing data, highlight and address strengths and deficiencies, and develop scenarios to inform policies for managing complex marine social-ecological systems.
+
+# Introduction
+
+The ocean contributes to human wellbeing by providing a diversity of goods and services such as food, energy, transport, among others as well as a source of cultural and recreational values to people [@Gattuso:2015jz; @Costello:2016kp]. However, drivers from human activities, including climate change, excessive extraction of marine resources, and pollution are impacting global marine biodiversity and ecosystem services [@Poloczanska:2013kj; @Weatherdon:2016ws; @Halpern:2008tu; @Portner:2014wm] and causing undesired social and economic outcomes [@Singh:2017ds]. Mitigating and managing these human drivers, and achieving sustainable ocean development, requires data from different disciplines, that spans longest time ranges possible, and that covers different geographic scales. Only with this diverse and complementary knowledge can policymakers evaluate status and trends, and set clear targets, for effective policy design and implementation [@IPBES:2016uq]. ]. Adopting a multidisciplinary approach has been recently recognized in partnerships aiming to achieve the cross-disciplinary United Nations (UN) Sustainable Development Goals [@UnitedNations2018]. Yet despite a call for global shift towards open science and the benefits imbedded [@@Michener:2006ib], data identification, access, and sharing continue to be a challenge throughout the world [@Tai:2018fj].
+
+Metadata is important in the harmonization of existing data across scales, disciplines and domains. Metadata refers to the information required to understand the data such as the data type, content, source, quality, format, structure, and accessibility [@Michener:1997vb; @Michener:2006ib]. Metadata repositories (and their development itself) can assist in addressing the challenges of data sharing, by improving data access, fostering collaboration among stakeholders, and facilitating subsequent analyses and data refinement [@CisnerosMontemayor:2016jn; @CisnerosMontemayor:2017eq]. Various research fields related to socio-ecological marine systems have generated large amounts of data. However, such information is often underutilized because it is scattered and held by different institutions or stakeholders, not standardized, and either not readily found nor widely accessible [@Portner:2014wm; @IPBES:2016uq; @Sagarminaga:2017vf]. Metadata is particularly useful for developing nations with limited research capacity [@Tai:2018fj] and where data exist but are perceived to be limited or unavailable [@OECD:2016eq].
+
+Country level repositories for marine systems including metadata have been created, with examples including Australia [@Hoenner:2018ki], Canada [@CisnerosMontemayor:2016jn], and the Canary Islands in Spain [@REDMIC:tg]. The Integrated Marine Observing System (IMOS) is an Australian national collaborative research project that includes a metadatabase allowing users to see dynamic graphs, enter metadata, and access data [@Hoenner:2018ki]. Such database resulted in hundreds of peer review publications, book chapters and reports [@IMOS:cldB6FWT]. In Canada [@CisnerosMontemayor:2016jn], a metadata repository was created with the objective of identifying thematic and information gaps in marine research for the Arctic, Pacific, and Atlantic regions, and was subsequently used to evaluate national policy progress towards the Convention on Biological Diversity - Aichi Targets (CBD) [@CisnerosMontemayor:2017eq]. The Integrated Marine Data Repository of the Canary Islands (REDMIC) includes data, metadata, research documents, maps, and interactive graphs related to the marine environment, which have supported regional decision making and research [@REDMIC:tg]. All of these initiatives aim to increase data access, support metadata research, and improve science-based decision making related to marine environmental policies.
+
+In this study, we develop a framework for interdisciplinary metadatabase of marine systems, with the aims of assessing existing research and information status and trends to support decision making for sustainable ocean development. We applied this framework to Mexico as an example of a developing nation with extensive marine and coastal areas [@Sagarminaga:2017vf]. As in other parts of the world, multiple academic (e.g. research institutions [@PortaldeDatosAbie:2018ui]), government [@INEGI:8XWgQ3Xx], civil society organizations (CSO) [@COBI:2018to], and private organizations and institutions generate and host a wealth of data from multiple research fields. However, information on these data—and the data itself—is not always visible, accessible, or searchable in a standardized format, so that individuals working in specific fields may be unaware of past or current related research. Further, the full scope of research - both temporally and spatially - is not easily available to policymakers. These limitations can be addressed through a dedicated effort centered around building and maintaining a metadata repository.
+
+This study describes the processes of metadatabase design, compilation, and methods to link and harmonize datasets from different scales and domains; we then offer examples of metadata-based analyses of historical, regional, and thematic trends. Creating and maintaining an open-source metadata repository can facilitate interpretation of information through public consultation and data sharing. Metadata analyses are critical to help identify data gaps and promote networking and collaboration among a wide array of individuals, institutions and organizations.
+
+
+# Materials and methods
+
+To develop a metadatabase of ocean research in Mexico (hereafter referred to as the MDB) we framed a four-stage process: (1) development of the MDB structure; (2) identification, outreach and compilation of available repositories and datasets; (3) development of protocols for metadata inclusion and sharing [@CisnerosMontemayor:2016jn]; (4) publication of the MDB in an accessible, open source and long-term stable platform with a partner institution (The National Commission for Biodiveristy, CONABIO [@CONABIO:Nx5xZZHT]). We then provided examples of meta-analyses for identification of information trends and gaps. The final MDB can be found at https://www.infoceanos.conabio.gob.mx.
+
+## Metadata structure
+
+There are five hierarchical levels to the MDB structure: Metadatabase > Repository > Dataset > Record > Data point (Fig 1). The metadatabase includes the metadata of datasets, while repositories are structures that compile multiple datasets. Repositories can exist as web-based data sources (e.g. Ocean Biogeographic Information System (OBIS) [@OBIS:av1nRut2]), thematic reports that contain data (e.g. Mexican Official Catch Statistics [@SAGARPACONAPESCA:2013wa]), or as institutional, laboratory or research project encompassing multiple datasets (e.g. the species catalogue of the National University’s Institute for Marine Science and Limnology, UNAM-ICMyL [@UNAMUNINMAR:TlMZFU99]). Metadata records are individual entries that describe each dataset within a repository (e.g. ‘clam landings in region A’, or ‘clam landings in region B’; Fig 1). Metadata records contain descriptions of existing data, but not the data themselves; in marine metadatabases these descriptions may include information about fisheries landings, species distributions, or fuel cost of fishing. A data point is a single item of information within a record. For example, a metadata record of annual fish (species specific) population abundance data from 2000 to 2003 includes four (yearly average) data points of estimated abundance data. Records are scale-specific spatially; for example, fisheries catch can be recorded by regional level or country level.
+
+
+**Fig 1. A schematic diagram of the metadata compilation process.** From the original repository, three different datasets are represented: the first dataset contains one topic: “landings”, the second contains two topics: “landings” and “revenue”, and the third contains  three topics: “landings, “aquaculture”, and “totals”. In addition, each dataset has multiple spatial components. The last column shows how the records would appear in the metadatabase.
+
+<!-- ![Fig 1. A schematic diagram of the metadata compilation process. From the original repository, three different datasets are represented: the first data type contains one topic: “landings”, the second contains two topics: “landings” and “revenue”, and the third contains  three topics: “landings, “aquaculture”, and “totals”. In addition, each dataset has multiple spatial components. The last column shows how the records would appear in the metadatabase.](Images/Methods_Flow.png) -->
+
+
+## Metadata categories
+
+Standardization of information within a metadatabase structure provides guidance for consistent description of new data subjects (e.g. abalone, clam, tuna) and types (e.g. methods, units of measurement, and details of experimental design) [@Michener:1997vb; @Reichman:2011kv; @Hoenner:2018ki]. Here, we assigned metadata fields (information categories) to maximize flexibility to accommodate multi-disciplinary data and allowing for various meta-analyses. Initially, the structure was adapted from a previous metadatabase developed for Canadian oceans [@CisnerosMontemayor:2016jn], with subsequent modifications (mainly to ensure compatibility of geographical and species nomenclature with existing frameworks in Mexico) following suggestions in meetings with ocean experts as described in the following section on metadata collection. The key difference between the structure of the MDB and the previous effort for Canada is that the metadata records in the latter represent a particular repository of information (e.g. a report or a database), with a metadata field indicating the number of unique time series within the record. In the MDB, each time series is a unique metadata record and a field notes its corresponding repository. While this structure requires somewhat more effort to input each time series individually, the resulting metadatabase is easier to analyze and allows for more specific information to be added to each record if necessary. The final MDB structure includes 29 categories ranging from general information (e.g. region or subject) to specific metadata including number of data points in the dataset and corresponding research fields (S1 Table).
+
+## Metadata collection 
+
+Compilation of metadata began with a review of public online repositories including OBIS [@OceanicBiogeographi:2018uc] and the UN’s Food and Agriculture Organization (UN-FAO) fisheries statistics [@FishStatJsoftware:2016uf], followed by federal government catalogues such as the Mexico’s Fisheries and Aquaculture Yearbook [@SAGARPACONAPESCA:2013wa], and datasets produced and hosted by universities and CSOs working with the marine environment. Using the first MDB developed with public data as a platform for discussion, we held a series of 20 workshops (~30 people each) with research groups (including universities, government researchers and CSO) in eight cities throughout Mexico regions (Fig 2). This was followed-up by in-person and virtual meetings, as well as presentations at national and international conferences to highlight progress and encourage others to contribute and collaborate (S2 Table). We additionally meet with four Mexican federal governmental institutions (CONACyT- National Council of Science and Technology [@CONACyT:2018wt], INAPESCA-National Institute of Fisheries and Aquaculture [@INAPESCA:2017vj], INECC-Ecology and Climate Change Institute [@INECC:n21eS6Cb], and CONABIO [@CONABIO:Nx5xZZHT]), and well-established data repository initiatives (e.g. dataMares [@dataMaresWorkPubl:MRU2oArL], FMCN-Monitoreo Noroeste [@FMCN:fXq_s_Z4]) to include their data in the metadatabase. While this represents an important first effort, it does not comprises all the potential data sources in Mexico highlighting the importance of continuing the current effort.
+
+```{r Effort_map, echo=F, message =F, warning=F, eval=F, fig.cap="Fig 2. Data collection effort. Location of the places where data were collected. CSO= Organizations of the Civic Society."}
+
+#--------------------------# 
+# Load spatial data
+#--------------------------# 
+Congresos <- fread("Data/Lugares.csv") %>% 
+  filter(Event != "AFS", # Did not happen
+         Type != "Other") # Remove other events from dataset
+
+
+# Shapefile from https://www.naturalearthdata.com/downloads/110m-cultural-vectors/
+path.ne.coast <- "./Data/ne_50m_admin_0_countries"
+file_name <- "ne_50m_admin_0_countries.shp"
+
+# Read shapefile
+data_coast <- st_read(dsn = path.ne.coast, 
+                      layer = file_path_sans_ext(file_name)
+                      )
+
+# data_coast$NAME_ES
+# names(data_coast)
+# head(data_coast)
+
+# Filter countries to inlcude
+Countries <- c("Estados Unidos", "Belice","Guatemala","El Salvador","Costa Rica","Panamá","Honduras","Nicaragua")
+
+# Create two datasets for different fill colors
+Mex <- filter(data_coast,  NAME_ES == "México")
+Central_A <- filter(data_coast,  NAME_ES %in% Countries)
+
+#--------------------------# 
+# Plot Effort map ####
+#--------------------------# 
+ggplot() + 
+  geom_sf(data = Mex, fill ="grey90", colour = "black") +
+  geom_sf(data = Central_A, fill ="grey80", colour = "black") +
+  coord_sf(ylim = c(32,7),
+           xlim = c(-120,-75)
+           ) +
+  # Points of effort
+  geom_point(data = Congresos, 
+    aes(
+      x= Long,
+      y = Lat,
+      colour = Type,
+      shape = Type
+    ),
+     size = 5
+  ) +
+  # Getting the text and locations for GoM #
+  geom_text_repel(data = subset(Congresos, Long > -98),
+    aes(
+      x= Long,
+      y = Lat,
+      label = Event,
+      color = Type
+    ),
+    show.legend = FALSE, # Don't display "a" in legend
+    size = 5, # Tamaño de texto
+    point.padding = 0.2, #Distancia de la línea al punto
+    box.padding = 0.5,
+    force = 1, # Overlapping labels
+    segment.alpha	= 0.5,
+    nudge_x       = 3 -subset(Congresos, Long > -98)$Long,
+    direction    = "y",
+    hjust = 0.5,
+   ) +
+  # Getting the text and locations for the GoC #
+  geom_text_repel(data = subset(Congresos, Long < -100),
+    aes(
+      x= Long,
+      y = Lat,
+      label = Event,
+      color = Type
+    ),
+    show.legend = FALSE, # Don't display "a" in legend
+    size = 5, # Tamaño de texto
+    point.padding = 1, #Distancia de la línea al punto
+    box.padding = .2,
+    force = .5, # Overlapping labels
+    segment.alpha	= 0.5,
+    nudge_x       = subset(Congresos, Long < -100)$Long,
+    direction    = "y",
+    hjust = 1
+   ) +
+  # Getting the text and locations for DF #
+  geom_text_repel(data = subset(Congresos, Location == "DF"),
+    aes(
+      x= Long,
+      y = Lat,
+      label = Event,
+      color = Type
+    ),
+    show.legend = FALSE, # Don't display "a" in legend
+    size = 5, # Tamaño de texto
+    force = 3, # Overlapping labels
+    segment.alpha	= 0.5
+   ) +
+  scale_colour_manual(values = c("#3B9AB2", "#EBCC2A", "#F21A00", "#E1AF00","black")) +
+  annotate("text",
+           label= "Mexico",
+           x = -102,
+           y = 25,
+           size = 6,
+           colour = "black"
+  ) +
+  theme_classic() +
+  theme(
+    panel.grid.major = element_line(color = "transparent"),
+    strip.background =element_rect(fill = "transparent"),
+    axis.line = element_blank(),
+    axis.ticks=element_blank(),
+    axis.text = element_blank(),
+    legend.position = "top",
+    legend.text = element_text(size = 20),
+    legend.title = element_text(size = 20)
+  ) +
+  labs(x = "",
+       y = "")
+  
+ # Save plot in tiff for plos
+ggsave("Map_Mex.tiff",
+       plot = last_plot(),
+       width = 11,
+       height = 9,
+       units = "in",
+       path = "./Images/")
+
+```
+
+```{r Repository_Exploration, eval = T, echo = F}
+
+ #### Main repositories ####
+
+Repositories <- Template %>% 
+  filter(Compilation_Title != "NA") %>% 
+  group_by(Compilation_Title) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n)) %>% 
+  mutate(Percentage = round((n/nrow(Template))*100))
+
+# Just to explore... by data points
+
+Repositories_DP <- Template %>% 
+  filter(Compilation_Title != "NA") %>% 
+  group_by(Compilation_Title) %>% 
+  summarise(n=sum(Data_Time_Points, na.rm=T)) %>% 
+  arrange(desc(n)) %>% 
+  mutate(Percentage = round((n/sum(Template$Data_Time_Points, na.rm=T))*100))
+
+#### N Institution_Type ####
+
+Institutions <- Template %>% 
+  filter(Institution_Type != "NA") %>% 
+  group_by(Institution_Type) %>% 
+  summarise(n= length(unique(Institution)),
+            Cuales = paste(unique(Author),
+                           collapse = "; ")) %>% 
+  arrange(desc(n))
+
+# Main three
+
+## Datamares
+
+DataMares <- Template %>% 
+  filter(Compilation_Title != "NA") %>% 
+  group_by(Compilation_Title) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n)) %>% 
+  mutate(Percentage = round((n/nrow(Template))*100))
+
+## Obis
+
+OBIS <- Template %>% 
+  filter(Institution == "OBIS") %>% 
+  group_by(Compilation_Title) %>%
+  summarise(n=n())
+
+OBIS_Spp <- Template %>% 
+  filter(Institution == "OBIS") %>% 
+  group_by(Subject_name) %>%
+  summarise(n=n())
+
+# Datos MX 
+DatosMX <- Template %>% 
+  filter(Compilation_Title == "Datos Abiertos Mx") %>%
+  group_by(Dataset_Title,
+           Institution
+           ) %>%
+  summarise(
+    n=n()
+    ) %>%
+  arrange(desc(n)) 
+
+```
+
+**Fig 2. Locations where metadata workshops were held and contributing institutions.** Abbreviations in S4 Table. Map reprinted from Natural Earth (naturalearthdata.com)
+
+<!-- ![Fig 2. Locations where metadata workshops were held and contributing institutions. Abbreviations in S4 Table.](Images/Effort_Map.png) -->
+
+## Types of data sources
+
+We included all available data sources in the MDB. Firstly, we attempted to include all available data related to Mexican ocean that were publicly available through the internet. These include data from academic, environmental CSO, governmental, international, and private (e.g. industry or personal non-academic) institute and organizations. Another source was unpublished data that were directly kept and maintained by stakeholders and/or institutions. The followings summarize some of the institutions that contributed data to the MDB, with a full list of contributing institutions in Table S3. 
+
+### a. Academia
+
+```{r ACA_Source, eval=T, echo=F, warning=F, message=F}
+
+#--------------------------# 
+# Academic repositories ####
+#--------------------------# 
+
+Aca_Repositories <- Template %>% 
+  filter(
+    Institution_Type == "ACA",
+    Compilation_Title != "NA") %>% 
+  group_by(Institution) %>% 
+  summarise(n=length(unique(Dataset_Title)))  %>% 
+  arrange(desc(n))
+
+Aca_Repo <- length(unique(Aca_Repositories$Institution))
+Aca_Dataset <- max(Aca_Repositories$n)
+
+### Exploring the top institutions
+
+UNIATMOS <- Template %>% 
+  filter(Institution == "UNAM-UNIATMOS") %>% 
+  group_by(Dataset_Title,
+           Compilation_Title) %>% 
+  summarise(n())
+
+UNAM_UAY <- Template %>% 
+  filter(Institution == "UNAM-UAY") %>% 
+  group_by(Dataset_Title,
+           Compilation_Title) %>% 
+  summarise(n())
+
+CINVESTAV <- Template %>% 
+  filter(Institution == "CINVESTAV-Merida") %>% 
+  group_by(Dataset_Title,
+           Compilation_Title) %>% 
+  summarise(n())
+
+```
+
+Academic data sources include any database hosted by a public or private academic institution in Mexico. Sources with comparatively large available data include the Digital Climatic Atlas of Mexico hosted by the National University (UNAM) [@AtlasClimaticoDigi:2018vh] which has an extensive open-access compilation of datasets on physicochemical parameters used in, among other uses, climate change models. The UNAM’s academic unit in Sisal, Yucatán (UNAM-UAY) provided information on topics including oceanographic, ecological, fisheries, biological, and tourism data [@UNAMUAY:2NhrxmaQ]. Finally, The Center for Research and Advanced Studies of the National Polytechnic Institute (CINVESTAV-IPN) holds extensive information on fisheries and tourism, mainly in the Yucatan peninsula [@CINVESTAVIPN:eLD1W_RK].
+
+### b. Governmental institutes
+
+```{r GOV_Sources, eval=T, echo=F}
+
+#--------------------------# 
+# Gov repositories ####
+#--------------------------# 
+
+Gov <- Template %>% 
+  filter(Institution_Type == "GOV") %>%
+  # filter(Compilation_Title == "Datos Abiertos Mx") %>% 
+  group_by(Institution,
+           Compilation_Title) %>%
+  summarise(n=length(unique(Dataset_Title)),
+            web = paste(unique(Reference),
+                        collapse = " "))  %>% 
+  arrange(desc(n))
+
+Gov_Repo <- length(unique(Gov$Institution))
+
+# Datos abiertos Mx
+
+Datos_Abiertos <- Template %>% 
+  # filter(Institution_Type == "GOV") %>%
+  filter(Compilation_Title == "Datos Abiertos Mx") %>%
+  group_by(Institution) %>%
+  summarise(n=length(unique(Dataset_Title)))  %>% 
+  arrange(desc(n))
+
+```
+
+Through a 2015 Mexican decree that establishes regulations for open data, the Mexican federal government made an unprecedented effort to host and make available thousands of public datasets through a national Open Data Portal [@DOF:2015vv; @DatosAbiertos:2017vn]. While the site does not comprise all information generated through decades of public programs, it represents a source of more than 500 datasets related to corruption, economic development, public services, climate change and human rights [@DatosAbiertos:2017vn]. **These types of data, although not uniquely related to marine ecosystems, are nonetheless important in considering many aspects of socio-ecological interactions that do indeed matter for ocean policy design [@IPBES:2016uq].** In addition to what can be found in the portal, governmental agencies also have data on their institutional web sites. Among the largest repositories in the metadata set are the Secretariat of Economy [@SistemaNacionalde:2017wf], the fisheries commission CONAPESCA [@SAGARPACONAPESCA:2013wa], and CONABIO [@CONABIO:2017uq]. All data from these and other institutions featured in the metadatabase are public and immediately available at the moment of consultation through reports, internet portals, and yearbooks.
+
+### c. Civil Society Organizations (CSO's)
+
+```{r NGO_Sources, eval=T, echo=F}
+
+#--------------------------# 
+# NGO repositories ####
+#--------------------------# 
+
+CSO <- Template %>% 
+  filter(Institution_Type == "NGO") %>% 
+  group_by(Institution) %>%
+  summarise(n())
+
+CSO_Repo <- length(unique(CSO$Institution))
+
+CSO_Monitoreo <- Monitoreo_T %>% 
+  filter(Institution_Type == "NGO") %>% 
+  group_by(Institution,
+           Author
+           ) %>%
+  summarise(n())
+
+```
+
+CSOs are sources of information that include fisheries, conservation, oceanography and sociological data. Comunidad y Biodiversidad, A.C (COBI) contributed the largest CSO repository in the metadatabase. This CSO aims to preserve marine ecosystems that are deteriorating due to unsustainable exploitation of natural resources and has extensive monitoring programs dating back over two decades [@COBI:2018to]. FMCN-Monitoreo Noroeste project is the second largest source of metadata from CSOs in the MDB and is itself a repository for monitoring data (~1,000 datasets) including efforts from 20 CSOs [@FMCN:fXq_s_Z4].
+
+### d. International academic sources
+
+```{r International_Sour, eval=T, echo=F}
+
+#--------------------------# 
+# Int repositories ####
+#--------------------------# 
+
+# Standarized to "Int"
+List <- c(
+  "Int",
+  "IGO",
+  "INT",
+  "Igo"
+  
+)
+
+International <- Template %>% 
+  filter(Institution_Type %in% List) %>% 
+  group_by(Institution) %>% 
+  summarise(n())
+  
+Inter_Repo <- length(unique(International$Institution))
+
+
+# Top repositories
+
+Units <- Template %>% 
+  filter(Institution == "UBC") %>% 
+  group_by(Author) %>% 
+  summarise(n())
+
+Fishbase <- Template %>% 
+  filter(Institution == "FishBase Consortium") %>% 
+  group_by(Subject_name) %>% 
+  summarise(n())
+
+```
+
+
+International research groups hold a variety of data for Mexico specifically at the global scale. dataMares and OBIS are the main international repositories available in the MDB. dataMares is an open source platform based at the University of California, San Diego, that hosts and facilitate access to robust scientific data related to Mexican coasts [@dataMaresWorkPubl:MRU2oArL]. OBIS is a global open-access data and information repository on marine biodiversity [@OBIS:av1nRut2]. In addition, the Arizona-Sonora Desert Museum has an extensive checklist of invertebrates of the Gulf of California, the University of British Columbia through the Changing Ocean Research Unit [@CORU:Auy8sh-X] and Fisheries Economic Research Unit [@FERU:V1kclIoK], holds more than three thousand records on fisheries economics, model projections on climate change and the associated changes in biodiversity and fisheries catches. Lastly, FishBase [@FishBase:2018wx] and SeaLifeBase [@SeaLife:kJFsMA4], online databases of marine life,  provide life history data, trophic ecology, and other issues for more than two thousand species occurring in Mexico.
+
+## Metadatabase analysis
+
+The MDB analysis was performed using the statistical software R-Studio (R) Version 1.1.463 with the packages data.table [@Packagedatatable:2019uh] and tidyverse [@PackagetidyverseE:2017vq]. We compared different metadata categories by number and percentage of records available by research field. Analyses include spatial and temporal distribution of the metadata collected, the amount of metadata collected by taxa, research field, and type of data source, as well as the socio-ecological relationship of the metadata. All figures were produced using the R packages ggplot2 [@PackageggplotCre:2018uv], cowplot [@CowplotStreamlined:2019wt], ggpubr [@Packageggpubrggp:2018tv], ggrepel [@PackageggrepelAut:2018to], gridExtra [@PackagegridExtraM:2017wx] and wesanderson [@Pckagewesanderson:2018ug]. 
+
+For the spatial component we used the packages ggplot2 [@PackageggplotCre:2018uv] and sf [@PackagesfSimpleF:2018vp], and Mexico’s shapefile was made with Natural Earth data (http://naturalearthdata.com). Although other spatial divisions exist for Mexico (e.g. CONABIO identifies five marine ecoregions, CONAPESCA identifies six fishing regions), we had to standardize the spatial division in order to include multidisciplinary data (Fig 2). In addition, “Subject names” such as “shrimp”, “shrimps”, “shrimp without head” were standardized as “Shrimp”, and scientific names were updated and corrected for typos with the package taxize [@Chamberlain:GvjOpci4].
+
+To identify thematic trends, we counted the number of records in the metadatabase, as well as the amount of data points (years of data) available in each record for the years of collection. All metadata was categorized based on their socio-ecological interaction using the DPSIR (Drivers, Pressures, State, Impacts, and Response) framework [@OECD:1993ui]. Accordingly, Benefits represent social benefits from natural systems (e.g. fisheries landings), Pressure (which we here equate with *Drivers*) represents any pressure from human activities to nature (e.g. fishing effort), Response considers actions that reduce pressure on natural systems (e.g. limiting fishing effort), finally State refers to the status of natural systems (e.g. stock assessments). We used the package networkD3 [@PackagenetworkDD:2017wd] to analyze the relation between records, institutions, research topics and DPSIR. Finally, we ran Chi-Square Test of statistical difference [@PackagestatsTheR:izARar7B] in the number of records between each variable to describe significant differences.
+
+It is possible that some records include duplicated datasets. We used R to automatize the identification of redundant sources of information (e.g. institutions with the same database). In addition, when possible, we asked data owners and repository curators if a database was already published in another repository. However, given the size of the metadatabase and extensive efforts to identify duplicated records, we do not expect this to be a significant issue. Records representing the same dataset (e.g. CONAPESCA catches and dataMares catches) but with different levels of processing (e.g. cleaned-up data or different years) were kept as separate records in the MDB.
+
+# Results
+
+```{r Results, eval=T, echo=F}
+
+#--------------------------# 
+# Number of repositories and Institutions ####
+#--------------------------# 
+
+Repo <- length(unique(Template$Compilation_Title))
+Inst <- length(unique(Template$Institution))
+
+Datasets <- length(unique(Template$Dataset_Title))
+
+#--------------------------# 
+# Disciplines (Sociology. eg.) ####
+#--------------------------# 
+
+Total_records <- nrow(Template)
+
+Research_Field <- Template %>%
+  group_by(Research_Field) %>% 
+  summarise(
+            Records =n(),
+            DP=sum(Data_Time_Points,
+                  na.rm =T)) %>%
+  mutate(
+    Rate_Log = log10(DP/Records),
+    Rate = round(DP/Records,2),
+    Record_Per = round((Records/Total_records)*100)
+    ) %>% 
+  arrange(desc(Records))
+
+#--------------------------# 
+### Chi-square on research field (Type) ##
+#--------------------------# 
+
+# H0: The likelihoods of having the same number of records per resereach source are equal.
+# H1: The likelihoods of having the same number of records per resereach source are NOT equal.
+
+Research_Chi <- chisq.test(Research_Field$Records)
+# Research_Chi
+
+# Reject null hypothesis (p < 0.001)
+
+# Data Exploration 
+
+# First Place
+
+First_Place <- Research_Field %>% 
+  arrange(desc(Record_Per)) %>% 
+  slice(1)
+
+# For text #
+Main_RF <- First_Place$Research_Field
+Main_RF_n <- round(First_Place$Records/1000)
+Main_RF_Per <- First_Place$Record_Per
+
+# Second Place
+
+Second_Place <- Research_Field %>% 
+  arrange(desc(Record_Per)) %>% 
+  slice(2)
+
+# For text #
+Second_RF <- Second_Place$Research_Field
+Second_RF_Per <- Second_Place$Record_Per
+Second_RF_n <- round(Second_Place$Records/1000)
+
+# Third Place
+
+Third_Place <- Research_Field %>% 
+  arrange(desc(Record_Per)) %>% 
+  slice(3)
+
+# For text #
+Third_RF <- Third_Place$Research_Field
+Third_RF_Per <- Third_Place$Record_Per
+Third_RF_n <- round(Third_Place$Records/1000)
+
+###____ End of paragrpah _____ ###
+
+#--------------------------# 
+### Chi-square on type of sources ####
+#--------------------------# 
+
+Sources <- Template %>% 
+  filter(!is.na(Institution_Type),
+         Institution_Type != "Unknown",
+         Institution_Type != "") %>% 
+  group_by(Institution_Type) %>% 
+  summarise(Records = n()) %>% 
+  mutate(Percentage = round((Records/nrow(Template)*100),2)) %>% 
+  arrange(desc(Percentage))
+
+# National_Sources <- sum(Sources$Percentage[2:5])
+
+# H0: The likelihoods of having the same number of records per resereach source are equal.
+# H1: The likelihoods of having the same number of records per resereach source are NOT equal.
+
+# Source_Chi <- chisq.test(Sources$Records)
+# Source_Chi
+
+# Reject null hypothesis (p < 0.001)
+
+```
+
+As of October of 2018, the metadatabase of marine research in Mexico currently includes `r Total_records` records, from `r nrow(Datasets)` datasets contained in `r Repo` repositories held by academic (n = `r Aca_Repo`), governmental agencies (n = `r Gov_Repo`), inter-governmental (n = 2), CSO (n = `r CSO_Repo`), and international data sources (n = `r Inter_Repo`). Records are not equally distributed across research fields ($X^2$ = 337060, d.f. = 10, *p* < 0.001), with `r Main_RF` comprising `r Main_RF_Per`% of all records, followed by `r Second_RF` with `r Second_RF_Per`% (Fig 3).
+
+**Fig 3. Number of records per research field.** A: Thousands of Records. B: Data points per records. Category Other in A represents all of the color-matching categories in B. Category Other in B represents mainly shipping.
+
+```{r Bar_Plot, eval=F, echo=F, fig.align="center", fig.height=6, fig.width=12, fig.cap="Fig 3. Number of records per research field. A: Thousands of Records. B: Data points per records. Category Other in A represents all of the color-matching categories in B. Category Other in B represents mainly shipping."}
+
+# Group small categories into "others"
+Other <- c("Oceanography",
+           "Other",
+           "Sociology",
+           "Tourism",
+           "Turism",
+           "Aquaculture")
+  
+
+#--------------------------# 
+# Plot figure 3 ####
+#--------------------------# 
+
+# Plot left, per record
+P1 <- Research_Field %>% 
+  filter(Research_Field != "",
+         !is.na(Research_Field)
+  ) %>% 
+  mutate("Research_Topic" =ifelse(Research_Field %in% Other, "Other",Research_Field)) %>% 
+  ggplot(.,
+         aes(
+           x=reorder(Research_Topic, 
+                     -Records),
+           y=Records/1000, #Thousands
+           fill=Research_Topic
+         )) +
+  geom_bar(stat="identity")+
+  scale_fill_manual(values = c("#3B9AB2", # Conservation 
+                               "#78B7C5", # Ecology
+                               "#EBCC2A", # Fisheries
+                               "#F21A00") # Other
+  ) +
+  coord_flip()+
+  theme_classic() +
+  ylab("Thousands Records")+
+  xlab("Research Field") +
+  ggtheme_plot() +
+  theme(legend.position = "none")
+      
+
+# Plot right, dp per record
+P2 <- Research_Field %>% 
+  filter(!is.na(Research_Field)) %>% 
+  ggplot(.,
+         aes(
+           x=reorder(Research_Field, 
+                     -Rate),
+           y=Rate,
+           fill=Research_Field
+         )) +
+  geom_bar(stat="identity")+
+  #coord_flip()+
+  theme_classic() +
+  ylab("Data Points per Record")+
+  xlab("")+
+  coord_flip()+
+  scale_fill_manual(values = c(
+    "#F21A00", # Aquaculture - Other
+    "#3B9AB2", # Conservation 
+    "#78B7C5", # Ecology
+    "#EBCC2A",# Fisheries
+    "#F21A00", # Oceanography - Other
+    "#F21A00", # Other - Other (Mainly shipping)
+    "#F21A00", # Sociology - Other
+    "#F21A00"# Tourism - Other
+  )
+  ) +
+  ggtheme_plot() +
+  theme(legend.position = "none")
+  
+# Transform plot to grob with the cowplot package
+gt <- arrangeGrob(P1,
+                  P2,
+                  ncol = 2
+                  )
+
+as_ggplot(gt) + # transform to a ggplot
+  draw_plot_label(label = c("A", "B"),
+                  size = 25,
+                  x = c(0, 0.5),
+                  y = c(1, 1)
+                  )
+
+
+# ggsave("Fig3.png",
+#        plot = last_plot(),
+#        width = 12,
+#        height = 6,
+#        units = "in",
+#        path = "/Users/carmelia/Dropbox/Metadata_Mexico/Manuscript/Submission/Figures")
+
+
+```
+
+
+```{r dataMares, eval=F, echo = F}
+
+# Exploration of Data Mares
+
+dataMares <-Template %>% 
+  filter(Compilation_Title == "dataMares") %>% 
+  group_by(Dataset_Title) %>% 
+  summarise(n())
+
+dataMares <-Template %>% 
+  filter(
+    Compilation_Title == "Datamares",
+    Location == "Santa Clara"
+    )
+
+# head(dataMares)
+# names(dataMares)
+# unique(dataMares$Compilation_Title)
+# View(dataMares)
+
+```
+
+International sources (e.g. Global Biodiversity Information Facility-GBIF; dataMares) contributed the highest number of records for Mexico (49%), though these include data collected by Mexican researchers, in Mexican institutions, or funded by the Mexican government [@Alonso:hv; @Fuentes:2017vr]. In general, metadata records are dominated by academic sources (across multiple topics) and government sources (mainly “Fisheries”) sources. While data sources varied among types of institutions, dataMares (52 datasets mostly on “Fisheries” representing more than 22,000 metadata records), Datos Abiertos Mx (90 datasets from nine different government agencies), and OBIS (19,000 records for more than 13,000 species) represent 46% of all records. Only 20 datasets are classified as private within the metadata (“Dataset Available” category), suggesting that virtually all data here analyzed are open access and available for consultation, and authors likely open for collaborations.
+
+Analyzing metadata collection years shed light on historical research trends as reflected in available data (Fig 4). The first metadata records dated back to data collected in 1791 (plankton records), and data on ecology were historically well represented with several collection events through time. Most fishery records begin in the early 1950s, expanding later as local research increased, with a remarkable increase in records on conservation topics around the first decade of the 21st century. Our analysis also shows a downward trend in total records starting around 2010 and an abrupt drop around 2015 (Fig 4). We believe this trend from 2015 to date are probably due to the delay in gathering and preparing information before it is made available.
+
+**Fig 4. Yearly metadata records by major research category.** Results shown from year 1950 onward. See Fig 1-B for categories included within "Other".
+
+<!-- ![Fig 4. Yearly metadata records by major research category. Results shown from year 1950 onward. See Fig 1-B for categories included within Other)](Images/Time_Plot.png) -->
+
+```{r time_plot, eval=F, echo=F,message=F, warning=F, fig.cap="Metadata records (thousands of records) included in a given year per research topic (results shown from year 1950 onward). ‘Other’ includes aquaculture, oceanography, tourism and sociology."}
+
+
+# GLobal variables
+YInicio <- 1700
+YFin <- 2017
+
+# Plot with Only Conservation, Ecology and Fisheries #### 
+
+C <- ts_subset(Template,YInicio,YFin,"Conservation")
+E <- ts_subset(Template,YInicio,YFin,"Ecology")
+Fi <- ts_subset(Template,YInicio,YFin,"Fisheries")
+Ot <- ts_subset(Template,YInicio,YFin,c("Oceanography",
+                                        "Other",
+                                        "Sociology",
+                                        "Tourism",
+                                        "Turism",
+                                        "Aquaculture")
+                )
+
+# To set the plot order
+Fin <- cbind(C,E,Fi,Ot)
+colnames(Fin) <- c("A","Conservation",
+                   "AA","Ecology",
+                   "AAA","Fisheries",
+                   "AAAA","Other"
+                   )
+
+#  Everything together
+Fin= na.omit(Fin[,c(
+  "Conservation",
+  "Ecology",
+  "Fisheries",
+  "Other"
+  )]
+  )
+
+###___en of step___###
+
+
+#Transforms the results to time series
+J_TS <- ts(Fin,
+           start=c(1700,1),
+           end = c(2017,12), 
+           frequency= 1)
+
+Fin$Date <- seq(1700,2017,1)
+
+# Subset data for 1950 to 2017
+GFin <- Fin %>% 
+  gather("Research Topic","Value",1:4) %>% 
+  filter(Date >= 1950 & Date <= 2017)
+
+# Plot it
+ggplot(GFin) +
+  geom_area(
+    aes(x = Date,
+        y = Value/1000,
+        fill = `Research Topic`,
+        colour = `Research Topic`),
+    alpha = 0.5) + # add the breaks
+  geom_vline(
+    aes(xintercept=2017), # END Lable
+    # Add vertical lines representing mayor data changes
+    linetype="dashed") +
+  annotate("text", x = 2016, y = 50, label = "2017", angle = 90) +
+  geom_vline(
+    aes(xintercept=1951), # Catch Statistics in Mexico
+    linetype="dashed") +
+  annotate("text", x = 1950, y = 30, label = "Early catch statistics in Mexico", angle = 90, size = 6) +
+  geom_vline(
+    aes(xintercept=2000), # Catch Statistics in Mexico Anuario de 2013
+    linetype="dashed") +
+  annotate("text", x = 1999, y = 28, label = "Release of disaggregated fisheries data", angle = 90, size = 6) +
+  geom_vline(
+    aes(xintercept=2008), # "Biologic Data From Fish from the Yucatan Peninsula
+    linetype="dashed") +
+  annotate("text", x = 2007, y = 30, label = "Biological Info. of fish from Yucatan", angle = 90, size = 6) +
+  ggtheme_plot() +
+  theme(
+    legend.position = "top",
+    legend.text = element_text(size = 18),
+    legend.title = element_text(size = 18),
+    axis.title.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20),
+    axis.text.x = element_text(size= 20),
+    axis.text.y = element_text(size= 20)
+  ) +
+  scale_colour_manual(values = c("#3B9AB2", "#78B7C5", "#EBCC2A","#F21A00")) +
+  scale_fill_manual(values = c("#3B9AB2", "#78B7C5", "#EBCC2A","#F21A00")) +
+  scale_x_continuous(name ="Date",
+                     limits = c(1950, 2020),
+                     breaks = seq(1950,2020,10))+
+  scale_y_continuous("Metadata Records (Thousands)",
+                     limits = c(0, 50),
+                     breaks = seq(0,50,10))
+
+
+ggsave("Time_Plot.png",
+       plot = last_plot(),
+       width = 12,
+       height = 6,
+       units = "in",
+       path = "/Users/carmelia/Dropbox/Metadata_Mexico/Manuscript/Images")
+
+```
+
+```{r Species_analysis, eval=T, echo = F, warning=F, message=F}
+
+#### Species Information ###
+
+Species <- Template %>%
+  filter(Subject_name !="TBD") %>% 
+  filter(!is.na(Subject_name)) %>%
+  group_by(Subject_name) %>% 
+  summarise(x=n(),
+            DP = sum(Data_Time_Points,
+                     na.rm=T)) %>% 
+  arrange(-x)
+
+Total <- sum(Species$x)
+
+Species_Text <- length(unique(Species$Subject_name))
+
+Species <- Species %>% 
+  mutate(SP_Percentage = (x/Total)*100) %>% 
+  arrange(desc(SP_Percentage))
+
+# First 10%
+ 
+Per_10 <- round(sum(Species$SP_Percentage[2:28]),2)
+ 
+# 24/nrow(Species)*100
+
+#First 50%
+
+Per_50 <- round(sum(Species$SP_Percentage[2:970]),2)
+# 
+# 970/nrow(Species)*100
+
+
+#### Where do the come from? ####
+
+Per_50_Spp <- Species$Subject_name[2:970]
+
+Per_50_Source <- Template %>% 
+  filter(Subject_name %in% Per_50_Spp) %>% 
+  group_by(Research_Field) %>% 
+  summarise(n=n())
+
+Per_50_Spp_Totl <- sum(Per_50_Source$n)
+
+Per_50_Source <- Per_50_Source %>% 
+  mutate(Percen = round((n/Per_50_Spp_Totl)*100))
+
+###########################################
+
+### Less than 100 records
+
+Under_100_R <- Species %>% 
+  filter(x <= 100)
+  
+Under_100 <- round((nrow(Under_100_R)/nrow(Species))*100,2)
+
+One_Recod <- Species %>% 
+  filter(x <= 1)
+  
+One_R <- round((nrow(One_Recod)/nrow(Species))*100,2)
+
+# Not run when knitteing, it will take ages ##
+### Subset Records with Taxa ###
+Correct_Taxa <- gnr_resolve(names = Species$Subject_name, #Looks for homogenic names
+                            best_match_only = TRUE, # Will only give us the best match
+                            canonical = TRUE #Removes names
+                            )
+
+#Records at the taxa level
+Taxa_Records <- Template %>%
+  filter(Subject_name %in% Correct_Taxa$submitted_name) %>%
+  group_by(Subject_name) %>%
+  summarise(n())
+
+Taxa_R <- round((nrow(Taxa_Records)/nrow(Species))*100,2) # 97.46
+
+Non_Taxa <- Template %>%
+  filter(!Subject_name %in% Correct_Taxa$submitted_name) %>%
+  group_by(Subject_name) %>%
+  summarise(n())
+
+
+#### Los tiburcios #####
+
+Tiburcios <- Template %>% 
+  filter(Author == "Silva, A.")
+
+```
+
+There are 24,083 subjects (taxa target of the data colelction) represented in the metadatabase. Most single-subject records (97%) represented taxa (e.g. *Octopus maya*, or *Epinephelus* spp.) and only 3% was identified with common names such as "Octopus" or "Mangrove". Assessments not differentiated by a single subject are grouped under “Multiple species” and comprised only 3% of all records. While the list of species in the metadata was quite large, data availability was uneven: 3.7% of subjects with most metadata records comprise `r One_R`% of all records. Subjects with the most amount of records were Carcharhinidae shark species *Carcharhinus porosus* and *C. falciformis* with 1,200 records each, followed by *C. limbatus* with almost 1,000 records. 
+
+```{r Geographic, echo = F, eval=T}
+
+### Areas ####
+Area <- Template %>% 
+        group_by(Area) %>% 
+        summarise(Entradas = n()) %>% 
+        filter(Area !="na") %>% 
+        filter(Area != "TBD") %>% 
+  arrange(-Entradas) %>% 
+  mutate(Per_Area = round((Entradas/nrow(Template)*100)))
+
+First_ID <- Area$Area[1]
+Second_ID <- Area$Area[2]
+Third_ID <- Area$Area[3]
+
+First_Value <- Area$Per_Area[1]
+Second_Value <- Area$Per_Area[2]
+Third_Value <- Area$Per_Area[3]
+
+
+### Regions ###
+
+# Reject null hypothesis (p < 0.001)
+
+Region <- Template %>% 
+  filter(!is.na(Region),
+         Region != "Na") %>% 
+  group_by(Region) %>% 
+  summarise(
+    Records = n()
+  )
+
+# Percentages
+
+#Geo Region#
+Geo_R <- Template %>% 
+        group_by(Region) %>% 
+        summarise(Entradas = n()) %>% 
+        filter(Region !="NA") %>% 
+        filter(Region != "TBD") %>% 
+  arrange(desc(Entradas))
+
+Tot_Region <- sum(Geo_R$Entradas)
+
+Geo_R <- Geo_R %>% 
+  mutate(Per_Area = round((Entradas/Tot_Region*100))
+                )
+
+GC <- paste(Geo_R$Per_Area[1])
+CBC <- paste(Geo_R$Per_Area[2])
+Nat <- paste(Geo_R$Per_Area[3])
+
+#--------------------------# 
+### Chi-square on regions ####
+#--------------------------# 
+
+# H0: The likelihoods of having the same number of records per Region are equal.
+# H1: The likelihoods of having the same number of records per Region are NOT equal.
+
+Region_Chi <- chisq.test(Geo_R$Entradas)
+# Region_Chi
+
+# Reject null hypothesis (p < 0.001)
+
+x <-Template %>% 
+  filter(Area == "National") %>% 
+  group_by(Research_Field) %>% 
+        summarise(
+          Entradas = n() # Thousands
+        )
+
+#--------------------------# 
+### Pacific data
+#--------------------------# 
+
+
+Pacific <- Template %>% 
+  filter(Area == "Pacific",
+         !Region %in% c("B. Camp. Caribe","Freshwater/Terrestrial","W. G. Mexico"),
+         !is.na(Region)
+         ) %>%
+  group_by(Region)%>%
+  summarise(Entradas = n()) 
+
+Pacific_Totals <- sum(Pacific$Entradas, na.rm = T)
+
+
+Pacific_Per <- Pacific%>% 
+  mutate(Per = Entradas/Pacific_Totals*100)
+
+#--------------------------# 
+### Freshwater
+#--------------------------# 
+
+
+x <-Template %>% 
+  filter(Region == "Freshwater/Terrestrial") %>% 
+  mutate(Area = "National")
+
+FW_MMID <- x$MMID
+
+NT <- Template %>% 
+  filter(!MMID %in% FW_MMID) %>% 
+  bind_rows(x)
+
+NTx <- NT %>% 
+  group_by(Area,Region) %>% 
+  summarise(n())
+
+
+
+#--------------------------# 
+### For map image
+#--------------------------# 
+
+Geo_Plot <- Template %>% 
+        group_by(Region,
+                 Research_Field) %>% 
+        summarise(
+          Entradas = n() # Thousands
+        )
+
+Region_Totals <- Template %>% 
+        group_by(Region) %>% 
+        summarise(
+          Tot_Reg = n()
+        )
+
+Geo_RF <- Geo_Plot %>% 
+  left_join(Region_Totals,
+            by ="Region") %>% 
+  mutate(
+    Percentage_Round = round((Entradas/Tot_Reg*100)),
+         Percentage = (Entradas/Tot_Reg)*100
+  )
+
+National_Numbers <- Template %>% 
+        group_by(Area,
+                 Research_Field) %>% 
+        summarise(Entradas = n() # Thousands
+        ) %>% 
+  filter(Area =="National")
+
+National_Total <- sum(National_Numbers$Entradas)
+
+National_Numbers <- National_Numbers %>% 
+  mutate(Per_Area = round((Entradas/National_Total*100),2)
+                )
+```
+
+There were significant differences in the distribution of metadata between oceans ($X^2$ = 93114, d.f. = 6, *p* < 0.001) with more data from the `r First_ID` (`r First_Value`% of records, though mostly in specific zones) than the `r Second_ID` (`r Second_Value`%);  the additional 14% of records were reported at the national level. Regional differences were significant  ($X^2$ = 63175, d.f. = 3, *p* < 0.001), with more records available for the Gulf of California and Northwest Mexican Pacific (`r GC`% of all records, and 77% of records within the Pacific), followed by the Campeche Bank and Caribbean region (`r CBC`%) (Fig 5).
+
+**Fig 5. Geographic location of metadata according to sub-regions and research category.** All values are in percentage except those that say “Record”; numbers within regions may not add to 100% due to exclusion of “other” types of research. Icons from Freepik (https://www.freepik.com) downloaded from https://www.flaticon.com on 07/12/2018. Map reprinted from Natural Earth (naturalearthdata.com)
+
+<!-- ![Fig 5. Geographic localization of metadata according to sub-regions and research category. All values are in percentage except those that say “Record”; numbers within regions may not add to 100% due to exclusion of “other” types of research. Icons from Freepik downloaded from https://www.flaticon.com on 07/12/2018. Creative Commons BY 3.0](Images/Spatial_Results.png) -->
+
+
+```{r Sources_Comparrison, eval=F,echo=F, warning=F, message=F}
+
+
+# Reject null hypothesis (p < 0.001)
+
+Out <- c("INT","Unknown","IGO","NGO")
+
+Institutions <- Template %>% 
+  filter(
+    !is.na(Institution_Type)
+    # !Institution_Type %in% Out
+  ) %>% 
+  group_by(Institution_Type) %>% 
+  summarise(
+    Records = n()
+  )
+
+# Institutions <- data.table( Institu =c(
+#   "BIN",
+#   "BAN"
+# ),
+# Record=c(
+#   100,
+#   130
+# ))
+
+
+# H0: The likelihoods of having the same number of records per Region are equal.
+# H1: The likelihoods of having the same number of records per Region are NOT equal.
+
+Institutions_Chi <- chisq.test(Institutions$Records)
+Institutions_Chi
+
+
+# Reject null hypothesis (p < 0.001)
+
+
+#### Contingency table ###
+
+Cont_Table <- Template %>% 
+  group_by(Research_Field,
+           SE_Interaction) %>% 
+  summarise(Records =n()) %>% 
+  filter(!is.na(SE_Interaction),
+         Research_Field != "Aquaculture") %>% 
+  spread(SE_Interaction,
+         Records) %>% 
+  ungroup() %>% 
+  select(-1)
+
+rownames(Cont_Table) <- unique(Template$Research_Field)[-4]
+
+Cont_Table[is.na(Cont_Table)] <- 0 # Replace NA with 0
+
+SE_Chi <- chisq.test(Cont_Table)
+SE_Chi #X-squared = 92197, df = 21, p-value < 2.2e-16
+# There is a statistical difference between the research type and the socio-ecological interaction
+SE_Chi$stdres
+# Oceanography and Fisheries beign the more different
+
+Inst_Cont_Table <- Template %>% 
+  group_by(Institution_Type,
+           SE_Interaction) %>% 
+  summarise(Records =n()) %>% 
+  filter(!is.na(SE_Interaction),
+         Institution_Type != "Unknown") %>% 
+  spread(SE_Interaction,
+         Records) %>% 
+  ungroup() %>% 
+  select(-1)
+
+rownames(Inst_Cont_Table) <- unique(Template$Institution_Type)[-6]
+
+Inst_Cont_Table[is.na(Inst_Cont_Table)] <- 0 # Replace NA with 0
+
+Ins_SE_Chi <- chisq.test(Inst_Cont_Table)
+Ins_SE_Chi #X-squared = 92197, df = 21, p-value < 2.2e-16
+# There is a statistical difference between the research type and the socio-ecological interaction
+SE_Chi$stdres
+# Oceanography and Fisheries beign the more different
+
+```
+
+For Mexico, most data generated in the academic sector was catalogued as *State* (e.g. species listings), with governmental information mainly reporting *Benefits* (e.g. tourism expenditures). Government agencies also provided information regarding *Pressures* on ecosystems, such as fishing subsidies, number of active fishing vessels, and so on. Finally, records from non-governmental institutions (national and international) mainly relate to the state of natural resources and social benefits such as employment (Fig 6). Sparse information about conservation topics was available regarding social benefits, and comparatively smaller amount of fisheries or aquaculture research addresses pressures versus benefits. Information regarding *Responses* is underrepresented in the metadatabase for all research fields.
+
+```{r SE_Network_Analysis, echo=F,eval=F, fig.cap="Relationship between institutions that host the data, the research topic and the social ecological interaction. Grey connections represent the amount of records connected, the thicker the connection more records."}
+
+# Just the metadata
+Template <- Meta_Template
+
+### NAS 
+
+Nas <- Template %>% 
+  filter(is.na(SE_Interaction)) %>% 
+  group_by(D_ID) %>% 
+  summarise(n())
+
+# Set the list of categories (order is important!)
+Category <- data.table::data.table(Name=c(
+    "Academic",
+    "Goverment",
+    "International",
+    "Aquaculture",
+    "Inter. Gov. Institution",
+    "O",
+    "Unknown",
+    "Conservation",
+    "Ecology",
+    "Fisheries",
+    "Oceanography",
+    "Sociology",
+    "Tourism",
+    "Other",
+    "State",
+    "Benefit",
+    "Pressure",
+    "Response"
+  )
+  ) %>% 
+  arrange(Name)
+
+#### For CONABIO's Plot in spanish ###
+
+Category <- data.table::data.table(Name=c(
+    "Academia",
+    "Acuacultura",
+    "Beneficio",
+    "Conservación",
+    "Ecología",
+    "Pesquerías",
+    "Gobierno",
+    "Inter. Gob.",
+    "Internacional",
+    "OSC",
+    "Oceanografía",
+    "Otras Instituciones",
+    "Presión",
+    "Respuesta",
+    "Sociología",
+    "Estado",
+    "Turismo",
+    "No se sabe"
+  )
+  )
+
+  #For Research Funding
+  R_Fund_Org <-  Template %>%
+    filter(!is.na(SE_Interaction)) %>% 
+    group_by(SE_Interaction,
+             Research_Field) %>%
+    summarise(Value =n()) %>%
+    rename(Source = Research_Field,
+           Target = SE_Interaction)
+  
+  # For Research field
+  Inst_Field <-Template %>%
+    filter(!is.na(SE_Interaction)) %>%
+    group_by(Institution_Type,
+             Research_Field) %>%
+    summarise(Value = n()) %>%
+    rename(Source = Institution_Type,
+           Target = Research_Field) %>% 
+    filter(!is.na(Source))
+  
+  # Merge them together
+  Final_Table <- R_Fund_Org %>%
+    bind_rows(Inst_Field) 
+  
+  Final_Table <- data.frame(ID = seq(1:nrow(Final_Table))) %>% 
+    bind_cols(Final_Table) %>% 
+    filter(!is.na(Source),
+           !is.na(Target))
+  
+  Final_Table_N <- Final_Table %>% 
+    gather("Category","Group",2:3) %>% 
+    arrange(Group)
+  
+  # Set variables to numeric for plotting
+  Final_Table_N$Character <- as.integer(as.factor(Final_Table_N$Group))
+  Final_Table_N$Character <- as.numeric(as.integer(Final_Table_N$Character)-1)
+  
+  # Create source dataset
+  Source <- Final_Table_N %>% 
+    filter(Category == "Source") %>% 
+    select(-Category) %>% 
+    rename(Source = Character)
+  
+  # Create target (from source) dataset
+  Target <- Final_Table_N %>% 
+    filter(Category == "Target") %>% 
+    select(-Category) %>%
+    rename(Target = Character) %>% 
+    left_join(Source,
+              by ="ID")
+  
+  
+  # Sankey network plot
+  sankeyNetwork(Links = Target, #Dataset with Source, Target and value
+              Nodes = Category, #Dataset withe the Names
+              Source = "Source", #Source column in Links dataset
+              Target = "Target", #Target column in Links dataset
+              Value = "Value.y", # The amount to plot from the Links dataset
+              NodeID = "Name", # What's showing when mouse over Node
+              fontSize = 22,
+              nodeWidth = 10
+  )
+  
+  # First only for nodes
+
+  # Set groups
+# Add a 'group' column to the nodes data frame:
+Category$Group=as.factor(c("Source",
+                           "Other",
+                           "SE",
+                           "Conservation",
+                           "Ecology",
+                           "Fisheries",
+                           "Source",
+                           "Source",
+                           "Source",
+                           "Source",
+                           "Other",
+                           "Other",
+                           "SE",
+                           "SE",
+                           "Other",
+                           "SE",
+                           "Other",
+                           "Source"
+                           ))
+
+
+  #### Manual colors
+# "#3B9AB2", # Conservation 
+# "#78B7C5", # Ecology
+# "#EBCC2A", # Fisheries
+# "#F21A00") # Other
+
+
+# Give a color for each group:
+my_color <- 'd3.scaleOrdinal() .domain(["Source", "SE", "Other", "Conservation", "Ecology","Fisheries","unique"]) .range(["#00A08A", "#F98400","#F21A00","#3B9AB2","#78B7C5","#EBCC2A","lightgrey"])'
+
+Target$Group <- as.factor(c("unique"))
+  
+sankeyNetwork(Links = Target, #Dataset with Source, Target and value
+              Nodes = Category, #Dataset withe the Names
+              Source = "Source", #Source column in Links dataset
+              Target = "Target", #Target column in Links dataset
+              Value = "Value.x", # The amount to plot from the Links dataset
+              NodeID = "Name", # What's showing when mouse over Node
+              units = "Records", #Units to show
+              fontSize = 22,
+              nodeWidth = 10,
+              colourScale = my_color,
+              NodeGroup = "Group", # Sets the nodes colors
+              LinkGroup = "Group"
+  )
+
+```
+
+**Fig 6. Characterization of institutions that host data, research field, and social-ecological interaction indicators.** Thickness of grey connections represents the number of metadata records.
+
+<!-- ![Fig 6. Characterization of institutions that host data, research field, and social-ecological interaction indicators. Thickness of grey connections represents the number of metadata records.](Images/Flow_Chart.png) -->
+
+
+# Discussion
+
+Metadatabase analysis of Mexico ocean data helped us to understand the availability of multi-disciplinary ocean-related information and data, identification of status and trends of research and available information, as well as knowledge gaps to support marine-related policy-making. Particularly, building a metadatabase of marine research allows for an overall evaluation of research and data trends that is useful for decision making [@CisnerosMontemayor:2016jn]. Our analysis of collected metadata revealed Mexico's long-term history of marine research with substantial ecological and fisheries-related data mainly on academic and government research institutions, respectively. However, we identified a need to incorporate and/or invest in long term ecological monitoring, other aspects of fisheries landings and other topics such as conservation and oceanography. Examples of these efforts can be found in initiatives like FMCN-Monitoreo Noroeste and the Long Term Ecological Research Network (LTER-Mex), databases [@LTERMex:2019vm]. Such efforts will certainly support policy progress towards sustainability goals such as the Convention on Biological Diversity Archi targets [@CisnerosMontemayor:2017eq]. We also identified a skewed regional distribution of data towards the Gulf of California and North Pacific and almost non existing in other areas of the Pacific. This result highlights that there is either a data gap in the regions other than the Gulf of California and North Pacific, or that available data are less assessable in these poorly represented areas.  The results from this study may help raise the awareness that resources to support more marine research and/or enhancing collaboration in knowledge exchange between institutions are needed in the regions.
+
+General trends in available data over time, as reflected in metadata, can be attributed to major national and international initiatives. Increases in available Mexican data in the 1950s stemmed from the request of the  United Nations’ Food and Agriculture Organization for developing countries to compile and report data on the state of national fisheries [@FishStatJsoftware:2016uf; @EspinozaTenorio:2011ct]. Worldwide, this increase in data availability enabled further research initiatives to complement policy-relevant information at local, regional and global scales (e.g. Sea Around Us [@Zeller2016], the Ocean Health Index [@Halpern:2008tu], and Too Big To Ignore - Information System on Small-scale Fisheries (TBTI-ISSF) [@TBTIWorkingGroup:QOuphKaA].
+
+Government efforts since the early 2000s have drastically improved fisheries data availability [@EspinozaTenorio:2011ct], including the annual CONAPESCA fishery yearbooks (in database format) [@CONAPESCA:2016] and the Open Data portal [@DatosAbiertos:2017vn]. Ecological and conservation metadata also increased during this period, mainly through academic and CSO monitoring programs; particularly large repositories include the UNAM-UAY for the Yucatan Peninsula, and COBI in the Caribbean, both of which have open data policies (Fig 3). The systematic study of the marine social-ecological systems by CSOs in the Gulf of California was prompted after federal law allowing CSOs to be established in early 2000s [@Gonzalez:2013uf]. The first decade was dedicated to organization, but consequently the first programs on fisheries and biodiversity were established once CSOs, government agencies, and academics developed a more formal relationship. These partnerships resulted in the availability of abundant information which in later years has informed specific conservation initiatives [@SuarezCastillo:2016vz], research initiatives and their scientific outputs [@EspinosaRomero:2014cp; @EspinosaRomero:2017gt]. Decreasing trends in available data in recent years may be explained by various factors, and most likely a lag between data collection and availability (due to processing or publication times) [@CisnerosMontemayor:2016jn], and funding constraints for data collection on specific topics that may historically have provided more data [@Cassani:2018ux; @SandovalVillalbazo:2017ul; @EspinozaTenorio:2011ct].
+
+It is interesting that many overall trends found in the Mexico metadata are comparable to research available for Canada, that used a similar metadatabase approach with almost identical categories that help in comparisons [@CisnerosMontemayor:2016jn]. For example, around 60% of all records in the Canada metadata corresponded to fisheries, and fisheries are indeed the largest contributor to research on use in Mexico (Figs. 3 and 4), with ecology being the second-highest and highest contributor to records for Canada and Mexico, respectively [@CisnerosMontemayor:2016jn]. There is also a strong prevalence towards research on single species (e.g. catch, life-history traits and presence/absence data), with these representing around 70% of records for Canada [@CisnerosMontemayor:2016jn] and over 90% in Mexico. However, research on ecosystems themselves has been increasing in both countries since the late 1990s, a likely reflection of the cementing of the ecosystem-based approach as a key aspect of management of marine resources around this time [@Fernandez:2011wi; @Murawski:2007cx], and also a relatively extensive research capacity in Mexico despite it being a developing nation. However, information on themes beyond fisheries or resource use itself are currently under-represented in the MDB, and particularly highlights a need for increased attention to research on the human dimensions of marine systems to inform integrated ocean assessments and support inclusive decision-making processes. This is not a limitation specific to research in North America, as comparable metadatabase projects from Australia [@Hoenner:2018ki] and the Canary Islands [@REDMIC:tg] show very-well documented and extensive information on species and ecosystems but little on the social characteristics of marine resource users.
+
+Although the long history of ecological data collection in Mexican waters produced several species catalogues from marine invertebrates to fishes and mammals [@Myers:2000bt], there is a substantial difference in metadata consistency between commercial and non-commercial species. Ecological data tend to be sporadic observation records, as most projects do not maintain long term monitoring series due to restrictive costs or time-bound funding restrictions [@CisnerosMontemayor:2016jn]. In contrast fisheries data collected have more consistent time-series, with more long-term monitoring records as compared to other ecological data, and for that reason represented the highest number of data points in the metadata (Fig 3). Thus, a commercially important fishery species in the metadatabase can have more than 50 years of catch data while non-commercial species often have a single observation record over the same time period. The overwhelming relative amount of information on fished species is understandable and not unique to Mexico [@Christiansen:2014gg], but ecosystem-based approaches to management require a much wider array of data, at the very least to adequately account for impacts from fisheries [@Pope:2000jf]. Furthermore, research not specifically related to current human uses is crucial to evaluate interactions, externalities and potential future responses to system shocks. 
+
+Regional differences in data availability reflected underlying research trends, but also differences in the regional capacity of institutions, and ecosystem and social-economic patterns [@EspinozaTenorio:2011kp]. The Gulf of California region, among the most biodiverse areas of the world [@PaezOsuna:2016kn] and of paramount importance for Mexican fisheries, has become a hub for academic research and conservation and fisheries-related initiatives. These research institutions provide the infrastructure to subsequently generate large amounts of data [@EspinozaTenorio:2011kp]. In contrast, the south-central Pacific of Mexico and the western Gulf of Mexico have far fewer fisheries research centers, CSOs, and education institutions than the rest of the country [@EspinozaTenorio:2011kp]. Unsurprisingly, these areas are also the least represented in the metadatabase and should be prioritized in future metadata collection.
+
+In the Gulf of Mexico, the catastrophic environmental and economic impact caused by the Deepwater Horizon well blowout in 2010 [@Smith:2010bq] highlighted the limited ecological data available to evaluate impacts and prompted increased scientific research supported in Mexico by federal agencies. Data produced from these new research are mostly not available yet due to ongoing litigation between governments, fishing and tourism associations, and oil producers, but this will eventually provide important information for the region. In addition, the development of important inter-institutional initiatives such as The Gulf of Mexico Research Consortium (CIGoM) based at the CICESE, CINVESTAV [@CIGoM:ZVLybxSI], and the Harte Research Institute [@Harte:_V9O6y8v], and the project of Marine Biodiversity of the South of the Gulf of Mexico led by the Marine Biodiversity Lab (BDMY) [@BDMY:2016ua] will help lay the foundations for a marine observatory in the region.
+
+We highlight three main lessons learned from the creation of the MDB and further metadata analysis that should be taken into account for future efforts. First, despite the benefits of data sharing [@Michener:2006ib; @OECD:2016eq], a range of institutional barriers often hinder the exchange of data (and even metadata) among stakeholders [@Reichman:2011kv]. These barriers include a lack of incentives to publish datasets (in terms of academic citations), unwillingness of data sharing by owners fearing to be scooped out of the project [@Nosek:2015bz], and technological limitation in maintaining and sharing large datasets for long time [@Reichman:2011kv]. A change in these systems can provide a better work environment, foster collaboration and boost interdisciplinary marine research. For example, Mexico’s educational system requires that most science students (from bachelors to PhD) produce theses including new datasets. However, such documents are not always digitalized (and rarely for older theses) and are difficult to find without previous knowledge of their existence; this type of information could easily be integrated into the metadata structure described here, opening up a significant opportunity to appreciate and link the work of young researchers throughout the country [@EspinozaTenorio:2011kp]. Moreover, recent legal changes mandate that all scientific and technological information derived from research and educational programs fully or partially funded with public resources must be open access. To achieve this, CONACYT was charged with the creation of a National Repository, itself fed by institutional repositories, that would store, maintain, and preserve scientific information [@DOF:vSatWFEC].
+
+Second, Mexico’s higher education network extends to more than 500 research institutions across 32 states [@SEP:2017], and government agencies such as INAPESCA have offices throughout the country [@EspinozaTenorio:2011kp], this is undoubtedly good in terms of research capacity but makes it very difficult to exchange information or engage in discussions. This can be beneficial as decentralized researchers can better address local issues [@EspinosaRomero:2014cp], but it also requires innovative strategies for collecting information (e.g. in the form of metadata), eliminating bureaucratic barriers to information sharing and facilitating collaborations across regions and institutions. 
+
+Finally, the internet is a vast dynamic and growing space, with new datasets and repositories becoming available at a rapid pace (sometimes daily). The current project partnered with CONABIO, a government agency specifically tasked with collecting, maintaining, and making data available, to produce a dynamic metadatabase that would continue to gather and share information through a user-friendly portal. Aside from this technical and strategic capacity to make scientific information widely available, CONABIO is the largest repository for natural science research and information on fields beyond, but related to, marine ecosystems.  The incorporation of the marine metadatabase can therefore become an important addition to wider knowledge, particularly given that the management of marine living resources requires an integration with atmospheric and ocean physics, freshwater basins, and land-based processes with direct and indirect feedbacks. Similarly, future metadata collection should further increase efforts to identify data related to emerging Ocean Economy sectors aside from fisheries (e.g. wind energy, blue carbon, ecotourism, bioprospecting), which are included here but will likely be the focus of more research in the future.
+
+The process of creating a multidisciplinary metadatabase framework, compiling metadata, and exemplifying potential analyses with preliminary results provides general trends of data availability and facilitates cross-disciplinary collaboration. In addition, transforming the MDB in an open access online platform, that is user-friendly and edditable improves the longevity of the metadatabse, and improves access and utilization of information to better inform policy and management strategies for complex systems [@Michener:1997vb; @Friddell:2014fw].
+
+# Conclusion
+
+The metadatabase approach developed here is intended as a cost- and time-effective way to identify information and research trends, strengths, and gaps, as well as a channel for researchers to communicate their science and engage in new collaborations. Incorporating a wide array of institutions and researchers, and making the best use of emerging technologies, can certainly improve on this type of metadatabase approach, both in Mexico and elsewhere. We consider that this effort can and should be repeated in other regions and countries. The ultimate goal of a metadatabase is to facilitate a multidisciplinary approach to informing social, environmental, and economic sustainability policies that are inclusive and effective across time and scale.
+
+# Acknowledgements
+
+We thank Environmental Defense Fund de México, A.C. for helping plan and facilitate of meetings and workshops for this research. We are indebted to researchers, managers, and diverse stakeholders that got involved with the project and who shared information about their data, as well as support on workshop logistics. We are particularly grateful to CONABIO; Carlos Galindo and Patricia Koleff for promoting the creation of the on-line portal, Carlos Alonso and Jesús Alanis for designing the portal, and everyone in CONABIO who supported and gave valuable feedback to improve the metadatabase.
+
+
+
+# Supplemental Material
+
+**S1 Table. List of all 29 metadata categories in the metadatabase**
+
+```{r S1_Table, eval=F, echo=F}
+
+S1_Table <- data.frame(
+  "Category" = names(Template)
+)
+
+write.csv(S1_Table,
+          "S1_Table.csv",
+          row.names = F)
+
+```
+
+
+**S2 Table. List of places where data was collected.** This list includes host institutions where we held (or participated in) workshops, meetings or presentations related to the metadata repository and compilation. Events organized by the authors were open invitations and Attendees shows the estimated number of people at each session.
+
+**S3 Table. List of authors and institutions represented in the metadatabase.** Note that not all authors were directly contacted; however, appropriated authorship was included as data were found publicly available in online-open-access repositories.
+
+```{r S3_Table, eval=F,echo=F}
+
+Autores <- Meta_Template %>% 
+  group_by(Author) %>% 
+  summarise(n()) # 284 authores
+
+Instituciones <- Meta_Template %>% 
+  group_by(Institution) %>% 
+  summarise(n()) # 59 instituciones
+
+write.csv(S3,
+          "S3_Table.csv",
+          row.names = F)
+
+ 
+```
+
+
+# References 
