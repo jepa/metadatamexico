@@ -63,8 +63,8 @@ ipak(packages)
 # Data needed ####
 #--------------------------#
 
-# Metadata Tempalte (Results)
-# Version december 2018
+# Metadata Template (Results)
+# Version December 2018
 Meta_Template <- suppressMessages(fread("~/Dropbox/Metadata_Mexico/English/Templates/Template_7.csv",
                  colClasses = c(Location = 'character',
                                 Notes = 'character'
@@ -74,7 +74,7 @@ Meta_Template <- suppressMessages(fread("~/Dropbox/Metadata_Mexico/English/Templ
 
 # Monitoreo Nooroeste Cleaned and processed Template
 ### Note ##
-# This Template is not included in the finalt Metadata Template but accounted for in the analysis.
+# This Template is not included in the final Metadata Template but accounted for in the analysis.
 
 Monitoreo_T <- read.csv("~/Dropbox/Metadata_Mexico/Manuscript/Data/Monitoreo_Template.csv") 
 
@@ -96,7 +96,8 @@ Key <- fread("Data/Metadata_Key.csv")
 # For plotting time plot (Fig 3)
 source('Functions/ts_fun.R')
 
-# For plots standarization
+# For plots standardization
+
 
 ggtheme_plot <- function() {
   theme(
@@ -171,9 +172,6 @@ There are five hierarchical levels to the MDB structure: Metadatabase > Reposito
 
 **Fig 1. A schematic diagram of the metadata compilation process.** From the original repository, three different datasets are represented: the first dataset contains one topic: “landings”, the second contains two topics: “landings” and “revenue”, and the third contains  three topics: “landings, “aquaculture”, and “totals”. In addition, each dataset has multiple spatial components. The last column shows how the records would appear in the metadatabase.
 
-<!-- ![Fig 1. A schematic diagram of the metadata compilation process. From the original repository, three different datasets are represented: the first data type contains one topic: “landings”, the second contains two topics: “landings” and “revenue”, and the third contains  three topics: “landings, “aquaculture”, and “totals”. In addition, each dataset has multiple spatial components. The last column shows how the records would appear in the metadatabase.](Images/Methods_Flow.png) -->
-
-
 ## Metadata categories
 
 Standardization of information within a metadatabase structure provides guidance for consistent description of new data subjects (e.g. abalone, clam, tuna) and types (e.g. methods, units of measurement, and details of experimental design) [@Michener:1997vb; @Reichman:2011kv; @Hoenner:2018ki]. Here, we assigned metadata fields (information categories) to maximize flexibility to accommodate multi-disciplinary data and allowing for various meta-analyses. Initially, the structure was adapted from a previous metadatabase developed for Canadian oceans [@CisnerosMontemayor:2016jn], with subsequent modifications (mainly to ensure compatibility of geographical and species nomenclature with existing frameworks in Mexico) following suggestions in meetings with ocean experts as described in the following section on metadata collection. The key difference between the structure of the MDB and the previous effort for Canada is that the metadata records in the latter represent a particular repository of information (e.g. a report or a database), with a metadata field indicating the number of unique time series within the record. In the MDB, each time series is a unique metadata record and a field notes its corresponding repository. While this structure requires somewhat more effort to input each time series individually, the resulting metadatabase is easier to analyze and allows for more specific information to be added to each record if necessary. The final MDB structure includes 29 categories ranging from general information (e.g. region or subject) to specific metadata including number of data points in the dataset and corresponding research fields (S1 Table).
@@ -185,8 +183,10 @@ Compilation of metadata began with a review of public online repositories includ
 ```{r Effort_map, echo=F, message =F, warning=F, eval=F, fig.cap="Fig 2. Data collection effort. Location of the places where data were collected. CSO= Organizations of the Civic Society."}
 
 #--------------------------# 
-# Load spatial data
+# Load data
 #--------------------------# 
+
+# Lugares.csv can be found as a supplemental material of the paper (Taable 2S)
 Congresos <- fread("Data/Lugares.csv") %>% 
   filter(Event != "AFS", # Did not happen
          Type != "Other") # Remove other events from dataset
@@ -205,7 +205,7 @@ data_coast <- st_read(dsn = path.ne.coast,
 # names(data_coast)
 # head(data_coast)
 
-# Filter countries to inlcude
+# Filter countries to inlcude in figure
 Countries <- c("Estados Unidos", "Belice","Guatemala","El Salvador","Costa Rica","Panamá","Honduras","Nicaragua")
 
 # Create two datasets for different fill colors
@@ -302,13 +302,13 @@ ggplot() +
   labs(x = "",
        y = "")
   
- # Save plot in tiff for plos
-ggsave("Map_Mex.tiff",
+ # Save plot in tiff for plos (.png for Github due to size limits)
+ggsave("Fig2.tiff",
        plot = last_plot(),
        width = 11,
        height = 9,
        units = "in",
-       path = "./Images/")
+       path = "./Figures/")
 
 ```
 
@@ -379,8 +379,6 @@ DatosMX <- Template %>%
 ```
 
 **Fig 2. Locations where metadata workshops were held and contributing institutions.** Abbreviations in S4 Table. Map reprinted from Natural Earth (naturalearthdata.com)
-
-<!-- ![Fig 2. Locations where metadata workshops were held and contributing institutions. Abbreviations in S4 Table.](Images/Effort_Map.png) -->
 
 ## Types of data sources
 
@@ -460,7 +458,7 @@ Datos_Abiertos <- Template %>%
 
 ```
 
-Through a 2015 Mexican decree that establishes regulations for open data, the Mexican federal government made an unprecedented effort to host and make available thousands of public datasets through a national Open Data Portal [@DOF:2015vv; @DatosAbiertos:2017vn]. While the site does not comprise all information generated through decades of public programs, it represents a source of more than 500 datasets related to corruption, economic development, public services, climate change and human rights [@DatosAbiertos:2017vn]. **These types of data, although not uniquely related to marine ecosystems, are nonetheless important in considering many aspects of socio-ecological interactions that do indeed matter for ocean policy design [@IPBES:2016uq].** In addition to what can be found in the portal, governmental agencies also have data on their institutional web sites. Among the largest repositories in the metadata set are the Secretariat of Economy [@SistemaNacionalde:2017wf], the fisheries commission CONAPESCA [@SAGARPACONAPESCA:2013wa], and CONABIO [@CONABIO:2017uq]. All data from these and other institutions featured in the metadatabase are public and immediately available at the moment of consultation through reports, internet portals, and yearbooks.
+Through a 2015 Mexican decree that establishes regulations for open data, the Mexican federal government made an unprecedented effort to host and make available thousands of public datasets through a national Open Data Portal [@DOF:2015vv; @DatosAbiertos:2017vn]. While the site does not comprise all information generated through decades of public programs, it represents a source of more than 500 datasets related to corruption, economic development, public services, climate change and human rights [@DatosAbiertos:2017vn]. These types of data, although not uniquely related to marine ecosystems, are nonetheless important in considering many aspects of socio-ecological interactions that do indeed matter for ocean policy design [@IPBES:2016uq]. In addition to what can be found in the portal, governmental agencies also have data on their institutional web sites. Among the largest repositories in the metadata set are the Secretariat of Economy [@SistemaNacionalde:2017wf], the fisheries commission CONAPESCA [@SAGARPACONAPESCA:2013wa], and CONABIO [@CONABIO:2017uq]. All data from these and other institutions featured in the metadatabase are public and immediately available at the moment of consultation through reports, internet portals, and yearbooks.
 
 ### c. Civil Society Organizations (CSO's)
 
@@ -490,10 +488,10 @@ CSOs are sources of information that include fisheries, conservation, oceanograp
 
 ### d. International academic sources
 
-```{r International_Sour, eval=T, echo=F}
+```{r Int_Sources, eval=T, echo=F}
 
 #--------------------------# 
-# Int repositories ####
+# International repositories ####
 #--------------------------# 
 
 # Standarized to "Int"
@@ -536,7 +534,7 @@ The MDB analysis was performed using the statistical software R-Studio (R) Versi
 
 For the spatial component we used the packages ggplot2 [@PackageggplotCre:2018uv] and sf [@PackagesfSimpleF:2018vp], and Mexico’s shapefile was made with Natural Earth data (http://naturalearthdata.com). Although other spatial divisions exist for Mexico (e.g. CONABIO identifies five marine ecoregions, CONAPESCA identifies six fishing regions), we had to standardize the spatial division in order to include multidisciplinary data (Fig 2). In addition, “Subject names” such as “shrimp”, “shrimps”, “shrimp without head” were standardized as “Shrimp”, and scientific names were updated and corrected for typos with the package taxize [@Chamberlain:GvjOpci4].
 
-To identify thematic trends, we counted the number of records in the metadatabase, as well as the amount of data points (years of data) available in each record for the years of collection. All metadata was categorized based on their socio-ecological interaction using the DPSIR (Drivers, Pressures, State, Impacts, and Response) framework [@OECD:1993ui]. Accordingly, Benefits represent social benefits from natural systems (e.g. fisheries landings), Pressure (which we here equate with *Drivers*) represents any pressure from human activities to nature (e.g. fishing effort), Response considers actions that reduce pressure on natural systems (e.g. limiting fishing effort), finally State refers to the status of natural systems (e.g. stock assessments). We used the package networkD3 [@PackagenetworkDD:2017wd] to analyze the relation between records, institutions, research topics and DPSIR. Finally, we ran Chi-Square Test of statistical difference [@PackagestatsTheR:izARar7B] in the number of records between each variable to describe significant differences.
+To identify thematic trends, we counted the number of records in the metadatabase, as well as the amount of data points (years of data) available in each record for the years of collection. All metadata was categorized based on their socio-ecological interaction using the DPSIR (Drivers, Pressures, State, Impacts, and Response) framework [@OECD:1993ui]. Accordingly, *Benefits* represent social benefits from natural systems (e.g. fisheries landings), *Pressure* (which we here equate with *Drivers*) represents any pressure from human activities to nature (e.g. fishing effort), *Response* considers actions that reduce pressure on natural systems (e.g. limiting fishing effort), finally *State* refers to the status of natural systems (e.g. stock assessments). We used the package networkD3 [@PackagenetworkDD:2017wd] to analyze the relation between records, institutions, research topics and DPSIR. Finally, we ran Chi-Square Test of statistical difference [@PackagestatsTheR:izARar7B] in the number of records between each variable to describe significant differences.
 
 It is possible that some records include duplicated datasets. We used R to automatize the identification of redundant sources of information (e.g. institutions with the same database). In addition, when possible, we asked data owners and repository curators if a database was already published in another repository. However, given the size of the metadatabase and extensive efforts to identify duplicated records, we do not expect this to be a significant issue. Records representing the same dataset (e.g. CONAPESCA catches and dataMares catches) but with different levels of processing (e.g. cleaned-up data or different years) were kept as separate records in the MDB.
 
@@ -660,7 +658,6 @@ Other <- c("Oceanography",
            "Turism",
            "Aquaculture")
   
-
 #--------------------------# 
 # Plot figure 3 ####
 #--------------------------# 
@@ -736,12 +733,12 @@ as_ggplot(gt) + # transform to a ggplot
                   )
 
 
-# ggsave("Fig3.png",
-#        plot = last_plot(),
-#        width = 12,
-#        height = 6,
-#        units = "in",
-#        path = "/Users/carmelia/Dropbox/Metadata_Mexico/Manuscript/Submission/Figures")
+ggsave("Fig3.tiff",
+       plot = last_plot(),
+       width = 12,
+       height = 6,
+       units = "in",
+       path = "./Figures")
 
 
 ```
@@ -774,8 +771,6 @@ International sources (e.g. Global Biodiversity Information Facility-GBIF; dataM
 Analyzing metadata collection years shed light on historical research trends as reflected in available data (Fig 4). The first metadata records dated back to data collected in 1791 (plankton records), and data on ecology were historically well represented with several collection events through time. Most fishery records begin in the early 1950s, expanding later as local research increased, with a remarkable increase in records on conservation topics around the first decade of the 21st century. Our analysis also shows a downward trend in total records starting around 2010 and an abrupt drop around 2015 (Fig 4). We believe this trend from 2015 to date are probably due to the delay in gathering and preparing information before it is made available.
 
 **Fig 4. Yearly metadata records by major research category.** Results shown from year 1950 onward. See Fig 1-B for categories included within "Other".
-
-<!-- ![Fig 4. Yearly metadata records by major research category. Results shown from year 1950 onward. See Fig 1-B for categories included within Other)](Images/Time_Plot.png) -->
 
 ```{r time_plot, eval=F, echo=F,message=F, warning=F, fig.cap="Metadata records (thousands of records) included in a given year per research topic (results shown from year 1950 onward). ‘Other’ includes aquaculture, oceanography, tourism and sociology."}
 
@@ -875,12 +870,12 @@ ggplot(GFin) +
                      breaks = seq(0,50,10))
 
 
-ggsave("Time_Plot.png",
+ggsave("Fig4.png",
        plot = last_plot(),
        width = 12,
        height = 6,
        units = "in",
-       path = "/Users/carmelia/Dropbox/Metadata_Mexico/Manuscript/Images")
+       path = "./Figures")
 
 ```
 
@@ -917,8 +912,7 @@ Per_50 <- round(sum(Species$SP_Percentage[2:970]),2)
 # 
 # 970/nrow(Species)*100
 
-
-#### Where do the come from? ####
+#### Where do they come from? ####
 
 Per_50_Spp <- Species$Subject_name[2:970]
 
@@ -946,7 +940,11 @@ One_Recod <- Species %>%
   
 One_R <- round((nrow(One_Recod)/nrow(Species))*100,2)
 
-# Not run when knitteing, it will take ages ##
+#_____________ NOTE__________ ##
+# Do not run when knitteing, it will take ages ##
+#____________________________ ##
+
+
 ### Subset Records with Taxa ###
 Correct_Taxa <- gnr_resolve(names = Species$Subject_name, #Looks for homogenic names
                             best_match_only = TRUE, # Will only give us the best match
@@ -1130,8 +1128,6 @@ There were significant differences in the distribution of metadata between ocean
 
 **Fig 5. Geographic location of metadata according to sub-regions and research category.** All values are in percentage except those that say “Record”; numbers within regions may not add to 100% due to exclusion of “other” types of research. Icons from Freepik (https://www.freepik.com) downloaded from https://www.flaticon.com on 07/12/2018. Map reprinted from Natural Earth (naturalearthdata.com)
 
-<!-- ![Fig 5. Geographic localization of metadata according to sub-regions and research category. All values are in percentage except those that say “Record”; numbers within regions may not add to 100% due to exclusion of “other” types of research. Icons from Freepik downloaded from https://www.flaticon.com on 07/12/2018. Creative Commons BY 3.0](Images/Spatial_Results.png) -->
-
 
 ```{r Sources_Comparrison, eval=F,echo=F, warning=F, message=F}
 
@@ -1220,7 +1216,7 @@ For Mexico, most data generated in the academic sector was catalogued as *State*
 
 ```{r SE_Network_Analysis, echo=F,eval=F, fig.cap="Relationship between institutions that host the data, the research topic and the social ecological interaction. Grey connections represent the amount of records connected, the thicker the connection more records."}
 
-# Just the metadata
+# Just the metadata excluding the detailed MN
 Template <- Meta_Template
 
 ### NAS 
@@ -1395,9 +1391,6 @@ sankeyNetwork(Links = Target, #Dataset with Source, Target and value
 
 **Fig 6. Characterization of institutions that host data, research field, and social-ecological interaction indicators.** Thickness of grey connections represents the number of metadata records.
 
-<!-- ![Fig 6. Characterization of institutions that host data, research field, and social-ecological interaction indicators. Thickness of grey connections represents the number of metadata records.](Images/Flow_Chart.png) -->
-
-
 # Discussion
 
 Metadatabase analysis of Mexico ocean data helped us to understand the availability of multi-disciplinary ocean-related information and data, identification of status and trends of research and available information, as well as knowledge gaps to support marine-related policy-making. Particularly, building a metadatabase of marine research allows for an overall evaluation of research and data trends that is useful for decision making [@CisnerosMontemayor:2016jn]. Our analysis of collected metadata revealed Mexico's long-term history of marine research with substantial ecological and fisheries-related data mainly on academic and government research institutions, respectively. However, we identified a need to incorporate and/or invest in long term ecological monitoring, other aspects of fisheries landings and other topics such as conservation and oceanography. Examples of these efforts can be found in initiatives like FMCN-Monitoreo Noroeste and the Long Term Ecological Research Network (LTER-Mex), databases [@LTERMex:2019vm]. Such efforts will certainly support policy progress towards sustainability goals such as the Convention on Biological Diversity Archi targets [@CisnerosMontemayor:2017eq]. We also identified a skewed regional distribution of data towards the Gulf of California and North Pacific and almost non existing in other areas of the Pacific. This result highlights that there is either a data gap in the regions other than the Gulf of California and North Pacific, or that available data are less assessable in these poorly represented areas.  The results from this study may help raise the awareness that resources to support more marine research and/or enhancing collaboration in knowledge exchange between institutions are needed in the regions.
@@ -1450,25 +1443,6 @@ write.csv(S1_Table,
 
 
 **S2 Table. List of places where data was collected.** This list includes host institutions where we held (or participated in) workshops, meetings or presentations related to the metadata repository and compilation. Events organized by the authors were open invitations and Attendees shows the estimated number of people at each session.
-
-**S3 Table. List of authors and institutions represented in the metadatabase.** Note that not all authors were directly contacted; however, appropriated authorship was included as data were found publicly available in online-open-access repositories.
-
-```{r S3_Table, eval=F,echo=F}
-
-Autores <- Meta_Template %>% 
-  group_by(Author) %>% 
-  summarise(n()) # 284 authores
-
-Instituciones <- Meta_Template %>% 
-  group_by(Institution) %>% 
-  summarise(n()) # 59 instituciones
-
-write.csv(S3,
-          "S3_Table.csv",
-          row.names = F)
-
- 
-```
 
 
 # References 
