@@ -1,6 +1,8 @@
 # Information
 In the following repository you can find the main script and data analysis for the project "Metadata for marine research in Mexico" published in the journal PLOSONE in 2019.
 
+*This repository has been archived and will no longer be updated*
+
 # Publication realted to this repository
 Palacios-Abrantes, J., Cisneros-Montemayor, A. M., Cisneros-Mata, M. A., Rodriguez, L., Arreguín-Sánchez, F., Aguilar, V., Domínguez-Sánchez, S., Fulton, S., López-Sagástegui, R., Reyes-Bonilla, H., Rivera-Campos, R., Salas, S., Simoes, N., and Cheung, W. W. L., 2019. A metadata approach to evaluate the state of ocean knowledge: Strengths, limitations, and application to Mexico. PLoS ONE, 14 (6), e0216723.
 
